@@ -236,7 +236,10 @@ input, select, textarea { font-family: inherit; }
 .auth-logo-mark { width: 48px; height: 48px; background: var(--color-accent); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
 .auth-title { font-family: var(--font-heading); font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 6px; }
 .auth-subtitle { font-size: 14px; color: var(--color-text-muted); text-align: center; margin-bottom: 28px; }
-.auth-error { font-size: 13px; color: var(--color-error); background: var(--color-error-light); border: 1px solid #e0b9b4; border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; }
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.auth-error { font-size: 13px; color: var(--color-error); background: var(--color-error-light); border: 1px solid #e0b9b4; border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+.auth-error-action { background: none; border: none; cursor: pointer; padding: 0; color: var(--color-error); font-size: 13px; font-weight: 600; text-decoration: underline; text-align: left; }
+.auth-links { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 @media (min-width: 768px) {

@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyAzX4JJqCP6aAnpmlkDC_wcnyLMyA50sI",
+  apiKey:            "AIzaSyAzX4JJJqCP6aAnpmlkDC_wcnyLMyA50sI",
   authDomain:        "orbium-kreiswerk.firebaseapp.com",
   projectId:         "orbium-kreiswerk",
   storageBucket:     "orbium-kreiswerk.firebasestorage.app",
