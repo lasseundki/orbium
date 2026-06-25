@@ -10,6 +10,7 @@ import ContactDetail from './screens/ContactDetail';
 import Pipeline from './screens/Pipeline';
 import Reminders from './screens/Reminders';
 import Settings from './screens/Settings';
+import Network from './screens/Network';
 import { useReminders } from './hooks/useReminders';
 import { todayStart } from './lib/utils';
 
@@ -31,6 +32,7 @@ function Shell() {
           <Route path="/contacts/:id" element={<ContactDetail />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/reminders" element={<Reminders />} />
+          <Route path="/network" element={<Network />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

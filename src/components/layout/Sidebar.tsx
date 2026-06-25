@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Users, GitBranch, Bell, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, GitBranch, Bell, Settings, LogOut, Share2 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
 
@@ -20,6 +20,7 @@ export default function Sidebar({ overdueBadge }: Props) {
     { to: '/contacts',  icon: Users,           label: t('nav.contacts') },
     { to: '/pipeline',  icon: GitBranch,        label: t('nav.pipeline') },
     { to: '/reminders', icon: Bell,             label: t('nav.reminders'), badge: overdueBadge },
+    { to: '/network',   icon: Share2,           label: t('nav.network') },
     { to: '/settings',  icon: Settings,         label: t('nav.settings') },
   ];
 

@@ -4,6 +4,7 @@ export default {
     contacts: 'Contacts',
     pipeline: 'Pipeline',
     reminders: 'Reminders',
+    network: 'Network',
     settings: 'Settings',
   },
   auth: {

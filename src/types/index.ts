@@ -32,6 +32,7 @@ export interface Contact {
   priority:        ContactPriority;
   status:          ContactStatus;
   referredBy?:     string;
+  referredById?:   string;
   source?:         string;
   notes?:          string;
   createdAt:       number;
@@ -70,6 +71,15 @@ export interface ReminderSequence {
   isActive:      boolean;
   steps:         SequenceStep[];
   createdAt:     number;
+}
+
+export interface Connection {
+  id:          string;
+  contactAId:  string;
+  contactBId:  string;
+  type:        string;
+  note?:       string;
+  createdAt:   number;
 }
 
 export interface ScheduledReminder {

@@ -4,6 +4,7 @@ export default {
     contacts: 'Contactos',
     pipeline: 'Pipeline',
     reminders: 'Recordatorios',
+    network: 'Red',
     settings: 'Ajustes',
   },
   auth: {

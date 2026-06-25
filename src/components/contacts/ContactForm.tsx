@@ -6,14 +6,16 @@ const CATEGORIES = ['Familie', 'Freunde', 'Interessent', 'Sport', 'Kirche', 'Kol
 
 interface Props {
   contact?: Contact;
+  contacts?: Contact[];
   onSubmit: (data: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
 }
 
-export default function ContactForm({ contact, onSubmit, onCancel }: Props) {
+export default function ContactForm({ contact, contacts = [], onSubmit, onCancel }: Props) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<string[]>(contact?.category ?? []);
+  const [referredById, setReferredById] = useState(contact?.referredById ?? '');
 
   function toggleCat(cat: string) {
     setCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
@@ -44,6 +46,7 @@ export default function ContactForm({ contact, onSubmit, onCancel }: Props) {
         strengths: get('strengths'),
         needs: get('needs'),
         referredBy: get('referredBy'),
+        referredById: referredById || undefined,
         source: get('source'),
         notes: get('notes'),
         birthday: getDate('birthday'),
@@ -154,10 +157,19 @@ export default function ContactForm({ contact, onSubmit, onCancel }: Props) {
 
         <hr className="form-divider" />
         <p className="section-label">Herkunft</p>
+        <div>
+          <label className="input-label">Eingeführt von (Kontakt)</label>
+          <select className="select" value={referredById} onChange={e => setReferredById(e.target.value)}>
+            <option value="">— keiner —</option>
+            {contacts.filter(c => c.id !== contact?.id).map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
         <div className="input-row">
           <div>
-            <label className="input-label">{t('contact.referredBy')}</label>
-            <input className="input" name="referredBy" defaultValue={contact?.referredBy ?? ''} placeholder="Name der Person" />
+            <label className="input-label">{t('contact.referredBy')} (Freitext)</label>
+            <input className="input" name="referredBy" defaultValue={contact?.referredBy ?? ''} placeholder="Nur wenn nicht in Kontakten" />
           </div>
           <div>
             <label className="input-label">{t('contact.source')}</label>

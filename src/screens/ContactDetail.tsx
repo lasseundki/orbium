@@ -7,6 +7,7 @@ import { useContacts } from '../hooks/useContacts';
 import { useInteractions } from '../hooks/useInteractions';
 import { useReminders } from '../hooks/useReminders';
 import { usePipeline } from '../hooks/usePipeline';
+import { useConnections } from '../hooks/useConnections';
 import { useToast } from '../components/ui/Toast';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { StatusBadge, PriorityBadge, OutcomeBadge, TypeBadge } from '../components/ui/StatusBadge';
@@ -30,6 +31,7 @@ export default function ContactDetail() {
   const { interactions, addInteraction, deleteInteraction } = useInteractions(uid, id);
   const { reminders, addManualReminder } = useReminders(uid);
   const { pipelines, upsertPipeline } = usePipeline(uid);
+  const { connections, addConnection, deleteConnection } = useConnections(uid);
 
   const [editing, setEditing] = useState(false);
   const [showInteraction, setShowInteraction] = useState(false);
@@ -39,12 +41,27 @@ export default function ContactDetail() {
   const [pipelineStage, setPipelineStage] = useState('');
   const [pipelineNotes, setPipelineNotes] = useState('');
   const [showPipeline, setShowPipeline] = useState(false);
+  const [showConnModal, setShowConnModal] = useState(false);
+  const [connToId, setConnToId] = useState('');
+  const [connType, setConnType] = useState('Bekannte');
+  const [connNote, setConnNote] = useState('');
 
   const contact = contacts.find(c => c.id === id);
   if (!contact) return <div className="screen"><p>{t('common.loading')}</p></div>;
 
   const contactReminders = reminders.filter(r => r.contactId === id && r.status === 'offen');
   const pipeline = pipelines.find(p => p.contactId === id);
+  const myConnections = connections.filter(e => e.contactAId === id || e.contactBId === id);
+  const referredByContact = contact.referredById ? contacts.find(c => c.id === contact.referredById) : null;
+
+  const CONNECTION_TYPES = ['Familie', 'Freunde', 'Bekannte', 'Geschäft', 'Sport', 'Schule', 'Kirche', 'Sonstiges'];
+
+  async function handleAddConnection() {
+    if (!connToId) return;
+    await addConnection(uid, { contactAId: id!, contactBId: connToId, type: connType, note: connNote || undefined });
+    showToast('Verbindung gespeichert');
+    setShowConnModal(false); setConnToId(''); setConnNote('');
+  }
 
   async function handleUpdate(data: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>) {
     await updateContact(uid, id!, data);
@@ -89,7 +106,7 @@ export default function ContactDetail() {
           </button>
         </div>
         <div className="card">
-          <ContactForm contact={contact} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
+          <ContactForm contact={contact} contacts={contacts} onSubmit={handleUpdate} onCancel={() => setEditing(false)} />
         </div>
       </div>
     );
@@ -206,7 +223,7 @@ export default function ContactDetail() {
           {[
             { label: 'Stärken', value: contact.strengths },
             { label: 'Bedürfnisse', value: contact.needs },
-            { label: t('contact.referredBy'), value: contact.referredBy },
+            { label: t('contact.referredBy'), value: referredByContact ? referredByContact.name : contact.referredBy },
             { label: t('contact.source'), value: contact.source },
             { label: t('contact.notes'), value: contact.notes },
           ].filter(r => r.value).map(row => (
@@ -238,6 +255,35 @@ export default function ContactDetail() {
           )}
         </div>
       )}
+
+      {/* Connections */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <p className="detail-section-title" style={{ marginBottom: 0 }}>Verbindungen</p>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowConnModal(true)}>
+            <Plus size={14} /> Hinzufügen
+          </button>
+        </div>
+        {myConnections.length === 0
+          ? <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Noch keine Verbindungen</p>
+          : myConnections.map(e => {
+            const otherId = e.contactAId === id ? e.contactBId : e.contactAId;
+            const other = contacts.find(c => c.id === otherId);
+            return (
+              <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid var(--color-border)', fontSize: 13 }}>
+                <span className="badge badge-neutral">{e.type}</span>
+                <span
+                  style={{ flex: 1, color: 'var(--color-accent)', cursor: 'pointer', fontWeight: 500 }}
+                  onClick={() => navigate(`/contacts/${otherId}`)}
+                >{other?.name ?? otherId}</span>
+                {e.note && <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>{e.note}</span>}
+                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-error)', padding: '2px 6px' }}
+                  onClick={() => deleteConnection(uid, e.id)}>✕</button>
+              </div>
+            );
+          })
+        }
+      </div>
 
       {/* Interactions */}
       <div className="card">
@@ -292,6 +338,40 @@ export default function ContactDetail() {
           onConfirm={handleDelete}
           onCancel={() => setShowDelete(false)}
         />
+      )}
+
+      {showConnModal && (
+        <div className="modal-overlay" onClick={() => setShowConnModal(false)}>
+          <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Verbindung hinzufügen</h2>
+              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowConnModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div>
+                <label className="input-label">Verbunden mit</label>
+                <select className="select" value={connToId} onChange={e => setConnToId(e.target.value)}>
+                  <option value="">Kontakt wählen…</option>
+                  {contacts.filter(c => c.id !== id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="input-label">Verbindungstyp</label>
+                <select className="select" value={connType} onChange={e => setConnType(e.target.value)}>
+                  {CONNECTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="input-label">Notiz (optional)</label>
+                <input className="input" value={connNote} onChange={e => setConnNote(e.target.value)} placeholder="z.B. Freunde seit Schulzeit" />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary btn-md" onClick={() => setShowConnModal(false)}>Abbrechen</button>
+              <button className="btn btn-primary btn-md" onClick={handleAddConnection} disabled={!connToId}>Speichern</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Pipeline modal */}
