@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { signOut } from 'firebase/auth';
-import { Plus, Trash2, ChevronDown, ChevronUp, Download, LogOut } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Download, Upload, LogOut } from 'lucide-react';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useContacts } from '../hooks/useContacts';
@@ -12,6 +12,28 @@ import type { ReminderSequence, SequenceStep, TriggerType } from '../types/index
 import i18n from '../i18n/index';
 
 const TRIGGER_TYPES: TriggerType[] = ['status_change', 'stage_change', 'manual'];
+
+const VALID_STATUSES = ['lead', 'aktiv', 'inaktiv', 'vip'] as const;
+const VALID_PRIORITIES = ['hoch', 'mittel', 'niedrig'] as const;
+
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current.trim()); current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
 
 function emptyStep(): Omit<SequenceStep, 'id'> {
   return { offsetDays: 3, message: '' };
@@ -30,6 +52,8 @@ export default function Settings() {
   const { showToast, toastEl } = useToast();
 
   const [lang, setLang] = useState(i18n.language);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editSeq, setEditSeq] = useState<Partial<ReminderSequence> | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -54,6 +78,59 @@ export default function Settings() {
     a.href = url; a.download = 'crm-kontakte.csv'; a.click();
     URL.revokeObjectURL(url);
     showToast('CSV exportiert');
+  }
+
+  async function importCsv(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      if (lines.length < 2) { showToast('Keine Daten gefunden'); return; }
+
+      const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u'));
+      const col = (names: string[]) => names.map(n => headers.indexOf(n)).find(i => i >= 0) ?? -1;
+
+      const iName     = col(['name']);
+      const iStatus   = col(['status']);
+      const iPriority = col(['prioritat', 'priority', 'priorität']);
+      const iCategory = col(['kategorien', 'categories', 'kategorie', 'category']);
+      const iEmail    = col(['e-mail', 'email']);
+      const iPhone    = col(['telefon', 'phone', 'tel']);
+      const iCompany  = col(['unternehmen', 'company', 'firma']);
+      const iNotes    = col(['notizen', 'notes', 'notiz']);
+
+      if (iName < 0) { showToast('Spalte "Name" nicht gefunden'); return; }
+
+      let count = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCsvLine(lines[i]);
+        const name = cols[iName];
+        if (!name) continue;
+
+        const rawStatus   = iStatus   >= 0 ? cols[iStatus]?.toLowerCase()   : '';
+        const rawPriority = iPriority >= 0 ? cols[iPriority]?.toLowerCase() : '';
+
+        await addContact(uid, {
+          name,
+          status:   VALID_STATUSES.includes(rawStatus as typeof VALID_STATUSES[number])   ? rawStatus   as typeof VALID_STATUSES[number]   : 'lead',
+          priority: VALID_PRIORITIES.includes(rawPriority as typeof VALID_PRIORITIES[number]) ? rawPriority as typeof VALID_PRIORITIES[number] : 'mittel',
+          category: iCategory >= 0 && cols[iCategory] ? cols[iCategory].split('|').filter(Boolean) : [],
+          email:    iEmail   >= 0 ? cols[iEmail]   || undefined : undefined,
+          phone:    iPhone   >= 0 ? cols[iPhone]   || undefined : undefined,
+          company:  iCompany >= 0 ? cols[iCompany] || undefined : undefined,
+          notes:    iNotes   >= 0 ? cols[iNotes]   || undefined : undefined,
+        });
+        count++;
+      }
+      showToast(`${count} Kontakt${count !== 1 ? 'e' : ''} importiert`);
+    } catch {
+      showToast('Fehler beim Import');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   }
 
   async function saveSequence() {
@@ -119,7 +196,7 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Export */}
+      {/* Export / Import */}
       <div className="settings-section">
         <div className="settings-section-title">{t('settings.export')}</div>
         <div className="settings-row">
@@ -128,6 +205,19 @@ export default function Settings() {
             <Download size={14} /> {t('settings.exportBtn')}
           </button>
         </div>
+        <div className="settings-row">
+          <span className="settings-row-label">{t('settings.importCsv')}</span>
+          <button className="btn btn-secondary btn-sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+            <Upload size={14} /> {importing ? '…' : t('settings.importBtn')}
+          </button>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          style={{ display: 'none' }}
+          onChange={importCsv}
+        />
       </div>
 
       {/* Account */}

@@ -206,6 +206,8 @@ export default {
     export: 'Daten exportieren',
     exportCsv: 'Kontakte als CSV exportieren',
     exportBtn: 'CSV herunterladen',
+    importCsv: 'Kontakte aus CSV importieren',
+    importBtn: 'CSV hochladen',
     newSequence: 'Neue Sequenz',
     editSequence: 'Sequenz bearbeiten',
     sequenceName: 'Name',
