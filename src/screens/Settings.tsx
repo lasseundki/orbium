@@ -65,9 +65,9 @@ export default function Settings() {
   }
 
   function exportCsv() {
-    const header = ['Name', 'Status', 'Priorität', 'Kategorien', 'E-Mail', 'Telefon', 'Unternehmen', 'Notizen'].join(',');
+    const header = ['Name', 'Status', 'Priorität', 'Kategorien', 'E-Mail', 'Telefon', 'Unternehmen', 'Eingeführt von', 'Quelle', 'Notizen'].join(',');
     const rows = contacts.map(c =>
-      [c.name, c.status, c.priority, c.category.join('|'), c.email ?? '', c.phone ?? '', c.company ?? '', c.notes ?? '']
+      [c.name, c.status, c.priority, c.category.join('|'), c.email ?? '', c.phone ?? '', c.company ?? '', c.referredBy ?? '', c.source ?? '', c.notes ?? '']
         .map(v => `"${String(v).replace(/"/g, '""')}"`)
         .join(',')
     );
@@ -92,14 +92,16 @@ export default function Settings() {
       const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u'));
       const col = (names: string[]) => names.map(n => headers.indexOf(n)).find(i => i >= 0) ?? -1;
 
-      const iName     = col(['name']);
-      const iStatus   = col(['status']);
-      const iPriority = col(['prioritat', 'priority', 'priorität']);
-      const iCategory = col(['kategorien', 'categories', 'kategorie', 'category']);
-      const iEmail    = col(['e-mail', 'email']);
-      const iPhone    = col(['telefon', 'phone', 'tel']);
-      const iCompany  = col(['unternehmen', 'company', 'firma']);
-      const iNotes    = col(['notizen', 'notes', 'notiz']);
+      const iName       = col(['name']);
+      const iStatus     = col(['status']);
+      const iPriority   = col(['prioritat', 'priority', 'priorität']);
+      const iCategory   = col(['kategorien', 'categories', 'kategorie', 'category']);
+      const iEmail      = col(['e-mail', 'email']);
+      const iPhone      = col(['telefon', 'phone', 'tel']);
+      const iCompany    = col(['unternehmen', 'company', 'firma']);
+      const iReferredBy = col(['eingefuhrt von', 'eingeführt von', 'referred by', 'referredby', 'empfohlen von']);
+      const iSource     = col(['quelle', 'source']);
+      const iNotes      = col(['notizen', 'notes', 'notiz']);
 
       if (iName < 0) { showToast('Spalte "Name" nicht gefunden'); return; }
 
@@ -117,10 +119,12 @@ export default function Settings() {
           status:   VALID_STATUSES.includes(rawStatus as typeof VALID_STATUSES[number])   ? rawStatus   as typeof VALID_STATUSES[number]   : 'lead',
           priority: VALID_PRIORITIES.includes(rawPriority as typeof VALID_PRIORITIES[number]) ? rawPriority as typeof VALID_PRIORITIES[number] : 'mittel',
           category: iCategory >= 0 && cols[iCategory] ? cols[iCategory].split('|').filter(Boolean) : [],
-          email:    iEmail   >= 0 ? cols[iEmail]   || undefined : undefined,
-          phone:    iPhone   >= 0 ? cols[iPhone]   || undefined : undefined,
-          company:  iCompany >= 0 ? cols[iCompany] || undefined : undefined,
-          notes:    iNotes   >= 0 ? cols[iNotes]   || undefined : undefined,
+          email:      iEmail      >= 0 ? cols[iEmail]      || undefined : undefined,
+          phone:      iPhone      >= 0 ? cols[iPhone]      || undefined : undefined,
+          company:    iCompany    >= 0 ? cols[iCompany]    || undefined : undefined,
+          referredBy: iReferredBy >= 0 ? cols[iReferredBy] || undefined : undefined,
+          source:     iSource     >= 0 ? cols[iSource]     || undefined : undefined,
+          notes:      iNotes      >= 0 ? cols[iNotes]      || undefined : undefined,
         });
         count++;
       }
