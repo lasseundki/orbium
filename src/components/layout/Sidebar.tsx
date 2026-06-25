@@ -26,7 +26,7 @@ export default function Sidebar({ overdueBadge }: Props) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img src="/orbium/favicon.svg" alt="Ob" style={{ width: 32, height: 32, borderRadius: 8 }} />
+        <img src={import.meta.env.BASE_URL + 'favicon.svg'} alt="Ob" style={{ width: 32, height: 32, borderRadius: 8 }} />
         <span className="sidebar-name">Orbium</span>
       </div>
       <nav className="sidebar-nav">

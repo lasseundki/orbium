@@ -94,7 +94,7 @@ export default function Auth() {
       <div className="auth-card">
 
         <div className="auth-logo">
-          <img src="/orbium/favicon.svg" alt="Orbium" width={52} height={52} style={{ borderRadius: 14 }} />
+          <img src={import.meta.env.BASE_URL + 'favicon.svg'} alt="Orbium" width={52} height={52} style={{ borderRadius: 14 }} />
         </div>
         <h1 className="auth-title">Orbium</h1>
         <p className="auth-subtitle">{modeLabel}</p>
